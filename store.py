@@ -1,5 +1,5 @@
 # ----------------------------
-# super_store_app_final.py
+# super_store_app_final_safe.py
 # ----------------------------
 import streamlit as st
 import pandas as pd
@@ -36,12 +36,27 @@ st.sidebar.title("📂 Data Options")
 data_source = st.sidebar.radio("Choose input method:", ["Upload CSV", "Manual Input"])
 
 # ----------------------------
-# Helper: preprocess date features
+# Safe preprocessing function
 # ----------------------------
-def preprocess_dates(df):
+def safe_preprocess_dates(df):
     df = df.copy()
-    df["Order Date"] = pd.to_datetime(df["Order Date"])
-    df["Ship Date"] = pd.to_datetime(df["Ship Date"])
+    required_cols = ["Order Date", "Ship Date", "Sales", "Quantity", "Discount", "Category", "Sub-Category", 
+                     "Country", "Region", "Ship Mode", "Segment", "State", "City", "Product Name"]
+    
+    for col in required_cols:
+        if col not in df.columns:
+            st.error(f"⚠️ Missing required column: '{col}'")
+            st.stop()
+    
+    # Convert to datetime safely
+    df["Order Date"] = pd.to_datetime(df["Order Date"], errors='coerce')
+    df["Ship Date"] = pd.to_datetime(df["Ship Date"], errors='coerce')
+    
+    if df["Order Date"].isna().all() or df["Ship Date"].isna().all():
+        st.error("⚠️ Could not convert 'Order Date' or 'Ship Date' to datetime!")
+        st.stop()
+    
+    # Extract date features
     df["Order_Year"] = df["Order Date"].dt.year
     df["Order_Month"] = df["Order Date"].dt.month
     df["Order_Day"] = df["Order Date"].dt.day
@@ -52,6 +67,9 @@ def preprocess_dates(df):
     df["Month_cos"] = np.cos(2 * np.pi * df["Order_Month"] / 12)
     df["DayOfWeek_sin"] = np.sin(2 * np.pi * df["Order_DayOfWeek"] / 7)
     df["DayOfWeek_cos"] = np.cos(2 * np.pi * df["Order_DayOfWeek"] / 7)
+    
+    # Safe week extraction
+    df["Order_Week"] = df["Order Date"].dt.isocalendar().week
     return df
 
 # ----------------------------
@@ -62,7 +80,7 @@ if data_source == "Upload CSV":
     if file:
         data = pd.read_csv(file, encoding="latin1")
         st.success("✅ Data uploaded successfully")
-        data = preprocess_dates(data)
+        data = safe_preprocess_dates(data)
     else:
         st.warning("⚠️ Please upload a file")
         st.stop()
@@ -87,7 +105,7 @@ else:
         "Product Name": st.sidebar.text_input("Product Name", "Staples Chair")
     }
     data = pd.DataFrame([row])
-    data = preprocess_dates(data)
+    data = safe_preprocess_dates(data)
 
 # ----------------------------
 # Tabs: Prediction & Analysis
@@ -107,7 +125,6 @@ with tab1:
         st.error(f"Prediction error: {e}")
 
     # Time-based aggregation
-    data["Order_Week"] = data["Order Date"].dt.isocalendar().week
     weekly_summary = data.groupby(["Order_Year","Order_Week"])["Predicted_Profit"].sum().reset_index()
     monthly_summary = data.groupby(["Order_Year","Order_Month"])["Predicted_Profit"].sum().reset_index()
     yearly_summary = data.groupby(["Order_Year"])["Predicted_Profit"].sum().reset_index()
@@ -142,9 +159,7 @@ with tab2:
     st.subheader(" Bottom 5 Products")
     st.table(bottom5.reset_index().rename(columns={"Predicted_Profit":"Total Profit"}))
 
-    # ----------------------------
     # KPI Cards
-    # ----------------------------
     st.subheader("🌍 Regional KPIs")
     regions = data["Region"].unique()
     cols = st.columns(len(regions))
@@ -175,9 +190,7 @@ with tab2:
         cols[i].metric(label=f"{cat} Sales", value=f"${total_sales_cat:,.2f}")
         cols[i].metric(label=f"{cat} Predicted Profit", value=f"${total_profit_cat:,.2f}")
 
-    # ----------------------------
     # Performance Charts
-    # ----------------------------
     st.subheader("🌎 Regional Sales Performance")
     region_perf = data.groupby("Region")["Predicted_Profit"].sum().sort_values(ascending=False)
     st.bar_chart(region_perf)
@@ -196,6 +209,7 @@ with tab2:
     subcat_perf = data.groupby("Sub-Category")["Predicted_Profit"].sum().sort_values(ascending=False)
     fig_subcat = px.bar(subcat_perf.reset_index(), x="Sub-Category", y="Predicted_Profit", color="Sub-Category", title="Profit by Sub-Category")
     st.plotly_chart(fig_subcat, use_container_width=True)
+
 
 
 
