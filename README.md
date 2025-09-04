@@ -35,7 +35,7 @@ We evaluated the following regression models:
 | LinearRegression          | `sklearn.linear_model` |
 | DecisionTreeRegressor     | `sklearn.tree`         |
 | KNeighborsRegressor       | `sklearn.neighbors`    |
-| XGBRegressor              | `xgboost`              |
+|             |              |
 
 ---
 
@@ -47,7 +47,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
-from xgboost import XGBRegressor
+
 from sklearn.metrics import r2_score
 
 modeles = {
@@ -56,7 +56,7 @@ modeles = {
     "LinearRegression": LinearRegression(),
     "DecisionTreeRegressor": DecisionTreeRegressor(),
     "KNeighborsRegressor": KNeighborsRegressor(),
-    "XGBRegressor": XGBRegressor()
+    
 }
 
 for name, model in modeles.items():
