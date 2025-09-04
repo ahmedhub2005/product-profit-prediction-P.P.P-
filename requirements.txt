@@ -1,19 +1,7 @@
-# Streamlit & core
-streamlit>=1.26.0
-
-# Data processing
-pandas>=2.1.0
-numpy>=1.26.0
-
-# Machine learning
-scikit-learn>=1.3.0
-joblib>=1.3.2
-
-# Visualization
-matplotlib>=3.8.0
-plotly>=5.17.0
-
-# Optional: for better table formatting in Streamlit
-rich>=14.1.0
-markdown-it-py>=4.0.0
-mdurl>=0.1.2
+streamlit==1.28.0
+pandas==2.1.1
+numpy==1.26.0
+scikit-learn==1.6.1
+matplotlib==3.8.0
+plotly==6.9.0
+joblib==1.3.2
